@@ -1,10 +1,14 @@
+import urllib.parse
+
 import requests
 from bs4 import BeautifulSoup
 import csv
-import  dateparser
-# домен который мы парсим
-CSV = 'vacancies.csv'
+import dateparser
+import lxml
 
+
+CSV = 'vacancies.csv'
+# домен который мы парсим
 HOST = 'https://rabota.by/'
 
 URL = 'https://rabota.by/search/vacancy?clusters=true&area=1002&enable_snippets=true&salary=&st=searchVacancy&text=Python+%D1%80%D0%B0%D0%B7%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D1%87%D0%B8%D0%BA&from=suggest_post'
@@ -40,6 +44,24 @@ def get_content(html_):
     return vacancies
 
 
+def get_pagination_limit():
+    text = get_html(URL)
+
+    soup = BeautifulSoup(text.text, 'lxml')
+
+    container = soup.select('a.bloko-button.HH-Pager-Control')
+
+    limit_list = []
+
+    for item in container:
+        x = item.text
+        limit_list.append(x)
+
+    last_button = limit_list[-2]
+
+    return int(last_button)
+
+
 def save_to_csv(items, path):
     with open(path, 'w', newline='', encoding="utf-8") as file:
         writer = csv.writer(file, delimiter=',')
@@ -49,12 +71,12 @@ def save_to_csv(items, path):
 
 
 def parse_all():
-    pagination = int(input('How much pages you want to parse?: '))
-
+    # pagination = int(input('How much pages you want to parse?: '))
+    pagination = get_pagination_limit()
     html_ = get_html(URL)
     if html_.status_code == 200:
         vacancies = []
-        for page in range(0, pagination + 1):
+        for page in range(0, pagination):
             print("Parsing page {}".format(page))
             html_ = get_html(URL, params={'page': page})
             vacancies.extend(get_content(html_.text))
