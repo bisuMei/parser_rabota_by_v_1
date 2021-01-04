@@ -1,11 +1,14 @@
+import os, django
 import urllib.parse
+
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "parcer_template_v_2.settings")
+django.setup()
 
 import requests
 from bs4 import BeautifulSoup
 import csv
 import dateparser
-import lxml
-
+from job_parser.models import Job
 
 CSV = 'vacancies.csv'
 # домен который мы парсим
@@ -35,9 +38,9 @@ def get_content(html_):
         vacancies.append(
             {
                 'title': item.select_one('span.g-user-content').string.strip(),
-                'vacancy_link': item.find('a', class_='bloko-link').get('href'),
+                'link': item.find('a', class_='bloko-link').get('href'),
                 'company': item.select_one('div.vacancy-serp-item__meta-info-company').string.strip(),
-                'post_date': absolute_date,
+                'date': absolute_date,
 
             }
         )
@@ -67,7 +70,7 @@ def save_to_csv(items, path):
         writer = csv.writer(file, delimiter=',')
         writer.writerow(['Title', 'Link', 'Company', 'Date'])
         for item in items:
-            writer.writerow([item['title'], item['vacancy_link'], item['company'], item['post_date']])
+            writer.writerow([item['title'], item['link'], item['company'], item['date']])
 
 
 def parse_all():
@@ -80,13 +83,21 @@ def parse_all():
             print("Parsing page {}".format(page))
             html_ = get_html(URL, params={'page': page})
             vacancies.extend(get_content(html_.text))
+            for item_ in vacancies:
+                title = item_['title']
+                company = item_['company']
+                date = item_['date']
+                link = item_['link']
+                job = Job(title=title, company=company, date=date, link=link)
+                job.save()
             save_to_csv(vacancies, CSV)
 
     else:
         print("Error")
 
 
-parse_all()
+if __name__ == '__main__':
+    parse_all()
 
 
 
