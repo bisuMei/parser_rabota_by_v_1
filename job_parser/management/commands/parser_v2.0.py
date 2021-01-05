@@ -1,14 +1,13 @@
 import os, django
-import urllib.parse
-
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "parcer_template_v_2.settings")
 django.setup()
-
 import requests
 from bs4 import BeautifulSoup
 import csv
 import dateparser
 from job_parser.models import Job
+
+
 
 CSV = 'vacancies.csv'
 # домен который мы парсим
@@ -88,8 +87,10 @@ def parse_all():
                 company = item_['company']
                 date = item_['date']
                 link = item_['link']
-                job = Job(title=title, company=company, date=date, link=link)
-                job.save()
+                if not link:
+                    return 1
+                job = Job.objects.get_or_create(title=title, company=company, date=date, link=link)
+                # job.save()
             save_to_csv(vacancies, CSV)
 
     else:
