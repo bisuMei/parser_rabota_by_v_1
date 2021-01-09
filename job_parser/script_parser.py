@@ -8,7 +8,6 @@ import dateparser
 from job_parser.models import Job
 
 
-
 CSV = 'vacancies.csv'
 # домен который мы парсим
 HOST = 'https://rabota.by/'
@@ -91,7 +90,7 @@ def parse_all():
                     return 1
                 job = Job.objects.get_or_create(title=title, company=company, date=date, link=link)
                 # job.save()
-            save_to_csv(vacancies, CSV)
+            # save_to_csv(vacancies, CSV)
 
     else:
         print("Error")
